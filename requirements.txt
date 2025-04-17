@@ -2,7 +2,7 @@ albumentations
 numpy
 scipy
 scikit-image
-sklearn
+scikit-learn
 logging
 glob
 PIL
