@@ -95,7 +95,7 @@ class MOAIDataloader(Dataset):
         # neg_files
         file_path = self.files[index]
 
-        fname = file_path.rsplit('.', 1)[0].rsplit('\\', 1)[1]
+        fname = file_path.rsplit('.', 1)[0].rsplit('/', 1)[1]
         
 
         img = np.array(Image.open(file_path).convert('RGB'))

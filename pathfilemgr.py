@@ -27,8 +27,8 @@ class MPathFileManager:
 		self.__make_dir()
 
 	def __make_dir(self):
-		# self.project_path = f'/{self.volume}/{self.project}'
-		self.project_path = f'../{self.project}'
+		self.project_path = f'/{self.volume}/{self.project}'
+		# self.project_path = f'../{self.project}'
 		if not os.path.exists(self.project_path):
 		     os.makedirs(self.project_path)
 
