@@ -1,7 +1,7 @@
 albumentations
 numpy
 scipy
-skimage
+scikit-image
 sklearn
 logging
 glob
