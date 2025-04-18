@@ -1,20 +1,17 @@
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
 
 import numpy as np
 import argparse
-from sklearn.metrics import roc_auc_score
 import matplotlib.pyplot as plt
 
 from model import PyramidFlow
 from util import MOAIDataloader
-from util import fix_randseed, compute_pro_score_fast, getLogger
+from util import fix_randseed
 
 from pathfilemgr import MPathFileManager
 from hyp_data import MHyp
-from utiles import remaining_time
 
 import argparse
 parser = argparse.ArgumentParser()
