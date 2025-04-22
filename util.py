@@ -105,7 +105,7 @@ class MOAIDataloader(Dataset):
 
         self.img2tensor = transforms.Compose([transforms.ToPILImage(),
                                             # transforms.Resize(x_size),
-                                            PadToSquare(1024),
+                                            PadToSquare(x_size),
                                             transforms.ToTensor(),
                                             transforms.Normalize(self.img_mean, self.img_std)
                                             ])
