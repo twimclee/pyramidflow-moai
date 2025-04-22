@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.backends.cudnn
 import torch.nn.functional as F
+import torchvision.transforms.functional as TF
 from torch.utils.data import Dataset
 from torchvision import transforms
 
@@ -41,6 +42,27 @@ def fix_randseed(seed):
     loader_dict = { 'worker_init_fn':seed_worker, 'generator':g}
     return loader_dict
 
+class PadToSquare:
+    def __init__(self, size):
+        self.size = size
+
+    def __call__(self, img):
+        w, h = img.size
+        scale = min(self.size / w, self.size / h)
+        new_w, new_h = int(w * scale), int(h * scale)
+
+        # Resize
+        img = TF.resize(img, (new_h, new_w))
+
+        # Pad to center
+        pad_left = (self.size - new_w) // 2
+        pad_top = (self.size - new_h) // 2
+        pad_right = self.size - new_w - pad_left
+        pad_bottom = self.size - new_h - pad_top
+
+        img = TF.pad(img, (pad_left, pad_top, pad_right, pad_bottom), fill=0)
+        return img
+    
 class PadTo1024:
     def __call__(self, img, size):
         w, h = img.size
@@ -82,8 +104,8 @@ class MOAIDataloader(Dataset):
                                      for ext in extensions], []))
 
         self.img2tensor = transforms.Compose([transforms.ToPILImage(),
-                                            transforms.Resize(x_size),
-                                            # PadTo1024(x_size),
+                                            # transforms.Resize(x_size),
+                                            PadToSquare(1024),
                                             transforms.ToTensor(),
                                             transforms.Normalize(self.img_mean, self.img_std)
                                             ])
@@ -95,7 +117,8 @@ class MOAIDataloader(Dataset):
         # neg_files
         file_path = self.files[index]
 
-        fname = file_path.rsplit('.', 1)[0].rsplit('/', 1)[1]
+        # fname = file_path.rsplit('.', 1)[0].rsplit('/', 1)[1]
+        fname = file_path.rsplit('.', 1)[0].rsplit('\\', 1)[1]
         
 
         img = np.array(Image.open(file_path).convert('RGB'))
