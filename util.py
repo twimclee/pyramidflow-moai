@@ -126,7 +126,7 @@ class MOAIDataloader(Dataset):
         if self.mode == 'test':
             # label_path = file_path.replace('valid', 'ground_truth').replace('.jpg', '_mask.png')
             label_path = file_path.replace('valid', 'ground_truth')
-            label_path = label_path.rsplit('.', 1)[0] + '_mask.png'
+            label_path = label_path.rsplit('.', 1)[] + '_mask.png'
             if osp.exists(label_path):
                 label = np.array(Image.open(label_path).convert('L'), dtype=np.float32)/255.
         if self.mode == 'train' :
