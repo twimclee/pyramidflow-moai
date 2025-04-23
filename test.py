@@ -1,3 +1,4 @@
+import json
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -53,6 +54,12 @@ class IPyramidFlow(nn.Module):
         return output
 
 def test(resnetX, num_layer, vn_dims, ksize, channel, num_stack, device, mpfm):
+    message = {
+        "status": "prepare",
+        "message": "추론 환경을 준비중입니다.",
+    }
+    print(json.dumps(message, ensure_ascii=False), flush=True)
+
     loader_dict = fix_randseed(seed=0)
 
     model_data = np.load(f'{mpfm.weight_path}/best.npz', allow_pickle=True)
@@ -130,16 +137,13 @@ def test(resnetX, num_layer, vn_dims, ksize, channel, num_stack, device, mpfm):
     test_dataset = MOAIDataloader(mode='test', x_size=x_size, y_size=256, datapath=mpfm.test_dataset)
     test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=0, persistent_workers=False, pin_memory=True, **loader_dict)
 
-    # val for template 
-    flow.eval()
-    feat_sum, cnt = [0 for _ in range(num_layer)], 0
-    for val_dict in val_loader:
-        image = val_dict['images'].to(device)
-        with torch.no_grad():
-            pyramid2= flow(image) 
-            cnt += 1
-        feat_sum = [p0+p for p0, p in zip(feat_sum, pyramid2)]
-    feat_mean = [p/cnt for p in feat_sum]
+    message = {
+        "status": "start",
+        "message": "모델 추론을 시작합니다."
+    }
+    print(json.dumps(message, ensure_ascii=False), flush=True)
+
+    feat_mean = loadfm(device)
 
     # test
     flow.eval()
@@ -157,6 +161,18 @@ def test(resnetX, num_layer, vn_dims, ksize, channel, num_stack, device, mpfm):
             plt.imshow(amap_norm, cmap='jet')
             plt.axis('off')
             plt.savefig(f'{mpfm.test_result}/{fname[0]}.png', bbox_inches='tight', pad_inches=0)
+
+    message = {
+        "status": "complete",
+        "message": "모델 추론이 완료되었습니다."
+    }
+    print(json.dumps(message, ensure_ascii=False), flush=True)
+
+def loadfm(device):
+    data = np.load(f'{mpfm.weight_path}/feat_mean.npz', allow_pickle=True)
+    feat_mean_arr = data['feat_mean']
+    feat_mean_tensor = [torch.from_numpy(arr).to(device) for arr in feat_mean_arr]
+    return feat_mean_tensor
 
 if __name__ == '__main__':
 

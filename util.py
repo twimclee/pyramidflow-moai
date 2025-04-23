@@ -93,7 +93,7 @@ class MOAIDataloader(Dataset):
             self.files = sorted(sum([glob(osp.join(self.datapath, 'good',f'*.{ext}')) for ext in extensions],[]))
         elif mode == 'test':
             self.files = sorted(sum([glob(osp.join(self.datapath, f'*.{ext}')) + 
-                                     glob(osp.join(self.datapath, '*', f'*.{ext}')) 
+                                     glob(osp.join(self.datapath, '*', f'*.{ext}'))
                                      for ext in extensions], []))
 
         self.img2tensor = transforms.Compose([transforms.ToPILImage(),

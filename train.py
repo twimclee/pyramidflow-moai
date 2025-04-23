@@ -113,6 +113,8 @@ def train(train_path, val_path, resnetX, num_layer, vn_dims, ksize, channel, num
             feat_sum = [p0+p for p0, p in zip(feat_sum, pyramid2)]
         feat_mean = [p/cnt for p in feat_sum]
 
+        savefm(feat_mean)
+
         # test
         flow.eval()
         diff_list, labels_list = [], []
@@ -130,8 +132,6 @@ def train(train_path, val_path, resnetX, num_layer, vn_dims, ksize, channel, num
                 plt.imshow(amap_norm, cmap='jet')
                 plt.axis('off')
                 plt.savefig(f'{mpfm.train_result}/{epoch}_{fname[0]}.png', bbox_inches='tight', pad_inches=0)
-
-
 
         labels_all = torch.concat(labels_list, dim=0)# b1hw 
         amaps = torch.concat(diff_list, dim=0)# b1hw 
@@ -171,6 +171,16 @@ def train(train_path, val_path, resnetX, num_layer, vn_dims, ksize, channel, num
     np.savez(f'{mpfm.weight_path}/best.npz', **save_dict) # save all 
 
     result_file.close()
+
+def savefm(feat_mean):
+
+    feat_mean_np = [f.cpu().numpy() for f in feat_mean]
+    feat_mean_arr = np.empty(len(feat_mean_np), dtype=object)
+    for i, arr in enumerate(feat_mean_np):
+        feat_mean_arr[i] = arr
+
+    np.savez(f'{mpfm.weight_path}/feat_mean.npz', feat_mean=feat_mean_arr)
+
 
 if __name__ == '__main__':
 

@@ -120,21 +120,7 @@ def onnx(resnetX, num_layer, vn_dims, ksize, channel, num_stack, device, mpfm):
         print(f"[E]모델 로딩 오류: {str(e)}")
         print("[E]가중치 로딩을 건너뛰고 계속 진행합니다.")
 
-    # dataset
-    val_dataset = MOAIDataloader(mode='val', x_size=x_size, y_size=256, datapath=mpfm.train_path)
-    val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False, num_workers=0, persistent_workers=False, pin_memory=True, drop_last=False, **loader_dict)
-
-
-    # val for template 
-    flow.eval()
-    feat_sum, cnt = [0 for _ in range(num_layer)], 0
-    for val_dict in val_loader:
-        image = val_dict['images'].to(device)
-        with torch.no_grad():
-            pyramid2= flow(image) 
-            cnt += 1
-        feat_sum = [p0+p for p0, p in zip(feat_sum, pyramid2)]
-    feat_mean = [p/cnt for p in feat_sum]
+    feat_mean = loadfm(device)
 
     ##########################################################################
     #    Test code to check outputs between saved model and uploaded model
@@ -174,6 +160,12 @@ def onnx(resnetX, num_layer, vn_dims, ksize, channel, num_stack, device, mpfm):
             input_names=['input'],      # 모델의 입력값을 가리키는 이름
             output_names=['output'],    # 모델의 출력값을 가리키는 이름
         )
+
+def loadfm(device):
+    data = np.load(f'{mpfm.weight_path}/feat_mean.npz', allow_pickle=True)
+    feat_mean_arr = data['feat_mean']
+    feat_mean_tensor = [torch.from_numpy(arr).to(device) for arr in feat_mean_arr]
+    return feat_mean_tensor
 
 if __name__ == '__main__':
 
