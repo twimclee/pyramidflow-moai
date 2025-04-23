@@ -62,13 +62,6 @@ class PadToSquare:
 
         img = TF.pad(img, (pad_left, pad_top, pad_right, pad_bottom), fill=0)
         return img
-    
-class PadTo1024:
-    def __call__(self, img, size):
-        w, h = img.size
-        pad_w = (size - w) // 2
-        pad_h = (size - h) // 2
-        return transforms.functional.pad(img, (pad_w, pad_h, pad_w, pad_h), fill=0)
 
 class MOAIDataloader(Dataset):
     """
@@ -104,8 +97,8 @@ class MOAIDataloader(Dataset):
                                      for ext in extensions], []))
 
         self.img2tensor = transforms.Compose([transforms.ToPILImage(),
-                                            # transforms.Resize(x_size),
-                                            PadToSquare(x_size),
+                                            transforms.Resize((x_size,x_size)),
+                                            # PadToSquare(x_size),
                                             transforms.ToTensor(),
                                             transforms.Normalize(self.img_mean, self.img_std)
                                             ])
@@ -120,13 +113,12 @@ class MOAIDataloader(Dataset):
         # fname = file_path.rsplit('.', 1)[0].rsplit('/', 1)[1]
         fname = file_path.rsplit('.', 1)[0].rsplit('\\', 1)[1]
         
-
         img = np.array(Image.open(file_path).convert('RGB'))
         label = np.zeros(img.shape[:2], dtype=np.float32)# h,w
         if self.mode == 'test':
             # label_path = file_path.replace('valid', 'ground_truth').replace('.jpg', '_mask.png')
             label_path = file_path.replace('valid', 'ground_truth')
-            label_path = label_path.rsplit('.', 1)[] + '_mask.png'
+            label_path = label_path.rsplit('.', 1)[0] + '_mask.png'
             if osp.exists(label_path):
                 label = np.array(Image.open(label_path).convert('L'), dtype=np.float32)/255.
         if self.mode == 'train' :
