@@ -158,10 +158,9 @@ def test(resnetX, num_layer, vn_dims, ksize, channel, num_stack, device, mpfm):
 
             diff = np.squeeze(diff.cpu().numpy())
             amap_norm = (diff - diff.min()) / (diff.max() - diff.min() + 1e-8)
-            plt.imshow(amap_norm, cmap='jet')
-            plt.axis('off')
-            plt.savefig(f'{mpfm.test_result}/{fname[0]}.png', bbox_inches='tight', pad_inches=0)
-
+            np.savez(f'{mpfm.test_result}/{fname[0]}.npz', amap_norm=amap_norm)
+            # plt.imsave(f'{mpfm.test_result}/{fname[0]}.png', amap_norm, cmap='jet')
+            
     message = {
         "status": "complete",
         "message": "모델 추론이 완료되었습니다."
