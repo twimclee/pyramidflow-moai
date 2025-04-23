@@ -110,13 +110,12 @@ class MOAIDataloader(Dataset):
         # neg_files
         file_path = self.files[index]
 
-        #fname = file_path.rsplit('.', 1)[0].rsplit('/', 1)[1]
-        fname = file_path.rsplit('.', 1)[0].rsplit('\\', 1)[1]
+        fname = file_path.rsplit('.', 1)[0].rsplit('/', 1)[1]
+        # fname = file_path.rsplit('.', 1)[0].rsplit('\\', 1)[1]
         
         img = np.array(Image.open(file_path).convert('RGB'))
         label = np.zeros(img.shape[:2], dtype=np.float32)# h,w
         if self.mode == 'test':
-            # label_path = file_path.replace('valid', 'ground_truth').replace('.jpg', '_mask.png')
             label_path = file_path.replace('valid', 'ground_truth')
             label_path = label_path.rsplit('.', 1)[0] + '_mask.png'
             if osp.exists(label_path):
