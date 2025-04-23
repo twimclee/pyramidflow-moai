@@ -103,15 +103,15 @@ class MOAIDataloader(Dataset):
                                             transforms.Normalize(self.img_mean, self.img_std)
                                             ])
         self.label2tensor = transforms.Compose([transforms.ToPILImage(), 
-                                                transforms.Resize(y_size),
+                                                transforms.Resize((y_size,y_size)),
                                                 transforms.ToTensor()])
 
     def __getitem__(self, index):
         # neg_files
         file_path = self.files[index]
 
-        fname = file_path.rsplit('.', 1)[0].rsplit('/', 1)[1]
-        # fname = file_path.rsplit('.', 1)[0].rsplit('\\', 1)[1]
+        #fname = file_path.rsplit('.', 1)[0].rsplit('/', 1)[1]
+        fname = file_path.rsplit('.', 1)[0].rsplit('\\', 1)[1]
         
         img = np.array(Image.open(file_path).convert('RGB'))
         label = np.zeros(img.shape[:2], dtype=np.float32)# h,w
