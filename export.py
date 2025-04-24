@@ -6,10 +6,8 @@ import numpy as np
 import argparse
 
 from model import PyramidFlow
-from util import MOAIDataloader
 from util import fix_randseed
 
-import csv
 from pathfilemgr import MPathFileManager
 from hyp_data import MHyp
 
@@ -110,12 +108,12 @@ def onnx(resnetX, num_layer, vn_dims, ksize, channel, num_stack, device, mpfm):
         # 모델 가중치 로딩
         print("[I]모델 가중치 로딩 중...")
         missing_keys, unexpected_keys = flow.load_state_dict(state_dict, strict=False)
-            
+
         if len(missing_keys) > 0:
             print(f"[I]누락된 키: {missing_keys}")
         if len(unexpected_keys) > 0:
             print(f"[I]예상치 못한 키: {unexpected_keys}")
-                
+
     except Exception as e:
         print(f"[E]모델 로딩 오류: {str(e)}")
         print("[E]가중치 로딩을 건너뛰고 계속 진행합니다.")
@@ -125,6 +123,7 @@ def onnx(resnetX, num_layer, vn_dims, ksize, channel, num_stack, device, mpfm):
     ##########################################################################
     #    Test code to check outputs between saved model and uploaded model
     ##########################################################################
+    # from util import MOAIDataloader
     # import matplotlib.pyplot as plt
     # test_dataset = MOAIDataloader(mode='test', x_size=x_size, y_size=256, datapath=mpfm.val_path)
     # test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=0, persistent_workers=False, pin_memory=True, **loader_dict)
