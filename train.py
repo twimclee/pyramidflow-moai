@@ -129,9 +129,8 @@ def train(train_path, val_path, resnetX, num_layer, vn_dims, ksize, channel, num
 
                 diff = np.squeeze(diff.cpu().numpy())
                 amap_norm = (diff - diff.min()) / (diff.max() - diff.min() + 1e-8)
-                plt.imshow(amap_norm, cmap='jet')
-                plt.axis('off')
-                plt.savefig(f'{mpfm.train_result}/{epoch}_{fname[0]}.png', bbox_inches='tight', pad_inches=0)
+                np.savez(f'{mpfm.train_result}/{fname[0]}.npz', amap_norm=amap_norm)
+                # plt.imsave(f'{mpfm.train_result}/{fname[0]}.png', amap_norm, cmap='jet')
 
         labels_all = torch.concat(labels_list, dim=0)# b1hw 
         amaps = torch.concat(diff_list, dim=0)# b1hw 
