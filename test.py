@@ -1,11 +1,10 @@
+
 import json
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
 import numpy as np
-import argparse
-import matplotlib.pyplot as plt
 
 from model import PyramidFlow
 from util import MOAIDataloader
@@ -34,24 +33,6 @@ mhyp = MHyp()
 mpfm.load_test_hyp(mhyp)
 
 
-class IPyramidFlow(nn.Module):
-    def __init__(self, flow_model, feat_mean):
-        super().__init__()
-        self.flow = flow_model
-        self.feat_mean = feat_mean
-
-    def forward(self, image):
-        # 1. 피라미드 추출
-        pyramid2 = self.flow(image) # flow 모델 실행
-
-        # 3. pyramid_diff 계산
-        pyramid_diff = [(feat2 - template).abs() for feat2, template in zip(pyramid2, self.feat_mean)]
-
-        # 4. 피라미드 합성
-        # compose_pyramid는 flow 모델의 pyramid 객체에 있으므로 접근
-        output = self.flow.pyramid.compose_pyramid(pyramid_diff).mean(1, keepdim=True)
-
-        return output
 
 def test(resnetX, num_layer, vn_dims, ksize, channel, num_stack, device, mpfm):
     message = {
@@ -91,6 +72,11 @@ def test(resnetX, num_layer, vn_dims, ksize, channel, num_stack, device, mpfm):
     # model
     flow = PyramidFlow(resnetX, channel, num_layer, num_stack, ksize, vn_dims, False).to(device)
 
+    # run dymmy on the model
+    with torch.no_grad():
+        dummy = torch.zeros((1, 3, x_size, x_size)).to(device)
+        _ = flow(dummy)
+
     try:
         # 키가 있는지 확인
         if 'state_dict_pixel' in model_data:
@@ -117,7 +103,8 @@ def test(resnetX, num_layer, vn_dims, ksize, channel, num_stack, device, mpfm):
                 state_dict[k] = v
             else:
                 state_dict[k] = torch.from_numpy(v)
-            
+
+
         # 모델 가중치 로딩
         print("[I]모델 가중치 로딩 중...")
         missing_keys, unexpected_keys = flow.load_state_dict(state_dict, strict=False)
@@ -131,9 +118,11 @@ def test(resnetX, num_layer, vn_dims, ksize, channel, num_stack, device, mpfm):
         print(f"[E]모델 로딩 오류: {str(e)}")
         print("[E]가중치 로딩을 건너뛰고 계속 진행합니다.")
 
+
+
     # dataset
-    val_dataset = MOAIDataloader(mode='val', x_size=x_size, y_size=256, datapath=mpfm.train_path)
-    val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False, num_workers=0, persistent_workers=False, pin_memory=True, drop_last=False, **loader_dict)
+    #val_dataset = MOAIDataloader(mode='val', x_size=x_size, y_size=256, datapath=mpfm.train_path)
+    #val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False, num_workers=0, persistent_workers=False, pin_memory=True, drop_last=False, **loader_dict)
     test_dataset = MOAIDataloader(mode='test', x_size=x_size, y_size=256, datapath=mpfm.test_dataset)
     test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=0, persistent_workers=False, pin_memory=True, **loader_dict)
 
@@ -147,18 +136,18 @@ def test(resnetX, num_layer, vn_dims, ksize, channel, num_stack, device, mpfm):
 
     # test
     flow.eval()
-    diff_list, labels_list = [], []
     for test_dict in test_loader:
         image, fname = test_dict['images'].to(device), test_dict['fname']
         with torch.no_grad():
             pyramid2 = flow(image) 
             pyramid_diff = [(feat2 - template).abs() for feat2, template in zip(pyramid2, feat_mean)]
-            diff = flow.pyramid.compose_pyramid(pyramid_diff).mean(1, keepdim=True)# b,1,h,w
-            diff_list.append(diff.cpu())
+            diff = flow.pyramid.compose_pyramid(pyramid_diff).mean(1, keepdim=True) # b,1,h,w
 
             diff = np.squeeze(diff.cpu().numpy())
             amap_norm = (diff - diff.min()) / (diff.max() - diff.min() + 1e-8)
             np.savez(f'{mpfm.test_result}/{fname[0]}.npz', amap_norm=amap_norm)
+
+            # import matplotlib.pyplot as plt
             # plt.imsave(f'{mpfm.test_result}/{fname[0]}.png', amap_norm, cmap='jet')
             
     message = {
@@ -170,7 +159,15 @@ def test(resnetX, num_layer, vn_dims, ksize, channel, num_stack, device, mpfm):
 def loadfm(device):
     data = np.load(f'{mpfm.weight_path}/feat_mean.npz', allow_pickle=True)
     feat_mean_arr = data['feat_mean']
-    feat_mean_tensor = [torch.from_numpy(arr).to(device) for arr in feat_mean_arr]
+
+    feat_mean_tensor = []
+    for arr in feat_mean_arr:
+        if isinstance(arr, np.ndarray):
+            tensor = torch.from_numpy(arr).to(device)
+        else:
+            tensor = torch.tensor(arr).to(device)
+        feat_mean_tensor.append(tensor)
+
     return feat_mean_tensor
 
 if __name__ == '__main__':
