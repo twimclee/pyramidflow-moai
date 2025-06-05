@@ -97,13 +97,13 @@ class MOAIDataloader(Dataset):
                                      for ext in extensions], []))
 
         self.img2tensor = transforms.Compose([transforms.ToPILImage(),
-                                            transforms.Resize((x_size,x_size)),
+                                            transforms.Resize((x_size,x_size), interpolation=Image.BILINEAR),
                                             # PadToSquare(x_size),
                                             transforms.ToTensor(),
                                             transforms.Normalize(self.img_mean, self.img_std)
                                             ])
         self.label2tensor = transforms.Compose([transforms.ToPILImage(), 
-                                                transforms.Resize((y_size,y_size)),
+                                                transforms.Resize((y_size,y_size), interpolation=Image.NEAREST),
                                                 transforms.ToTensor()])
 
     def __getitem__(self, index):
