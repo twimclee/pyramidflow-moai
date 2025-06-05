@@ -1,12 +1,10 @@
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
 
 import numpy as np
 import argparse
 
 from model import PyramidFlow
-from util import fix_randseed
 
 from pathfilemgr import MPathFileManager
 from hyp_data import MHyp
@@ -51,8 +49,7 @@ class IPyramidFlow(nn.Module):
         return output
 
 def onnx(resnetX, num_layer, vn_dims, ksize, channel, num_stack, device, mpfm):
-    loader_dict = fix_randseed(seed=0)
-
+    
     model_data = np.load(f'{mpfm.weight_path}/best.npz', allow_pickle=True)
 
     cls_name = model_data['cls_name'].item() if 'cls_name' in model_data else cls_name
@@ -72,11 +69,17 @@ def onnx(resnetX, num_layer, vn_dims, ksize, channel, num_stack, device, mpfm):
     print(f"커널 크기: {ksize}")
     print(f"채널 수: {channel}")
     print(f"스택 수: {num_stack}")
+    print(f"입력크기: {x_size}")
 
     print(resnetX, channel, num_layer, num_stack, ksize, vn_dims, False)
 
     # model
     flow = PyramidFlow(resnetX, channel, num_layer, num_stack, ksize, vn_dims, False).to(device)
+
+    # run dymmy on the model
+    with torch.no_grad():
+        dummy = torch.zeros((1, 3, x_size, x_size)).to(device)
+        _ = flow(dummy)
 
     try:
         # 키가 있는지 확인
@@ -124,7 +127,10 @@ def onnx(resnetX, num_layer, vn_dims, ksize, channel, num_stack, device, mpfm):
     #    Test code to check outputs between saved model and uploaded model
     ##########################################################################
     # from util import MOAIDataloader
+    # from util import fix_randseed
+    # from torch.utils.data import DataLoader
     # import matplotlib.pyplot as plt
+    # loader_dict = fix_randseed(seed=0)
     # test_dataset = MOAIDataloader(mode='test', x_size=x_size, y_size=256, datapath=mpfm.val_path)
     # test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=0, persistent_workers=False, pin_memory=True, **loader_dict)
     # tc = 0
@@ -163,7 +169,15 @@ def onnx(resnetX, num_layer, vn_dims, ksize, channel, num_stack, device, mpfm):
 def loadfm(device):
     data = np.load(f'{mpfm.weight_path}/feat_mean.npz', allow_pickle=True)
     feat_mean_arr = data['feat_mean']
-    feat_mean_tensor = [torch.from_numpy(arr).to(device) for arr in feat_mean_arr]
+
+    feat_mean_tensor = []
+    for arr in feat_mean_arr:
+        if isinstance(arr, np.ndarray):
+            tensor = torch.from_numpy(arr).to(device)
+        else:
+            tensor = torch.tensor(arr).to(device)
+        feat_mean_tensor.append(tensor)
+
     return feat_mean_tensor
 
 if __name__ == '__main__':
